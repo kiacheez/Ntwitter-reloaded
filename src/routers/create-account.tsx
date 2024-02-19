@@ -1,37 +1,13 @@
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import React, { useState } from "react";
-import styled from "styled-components"
+import { auth } from "../firebase";
+import { Link, useNavigate } from "react-router-dom";
+import { FirebaseError } from "firebase/app";
+import { Error, Form, Input, Swithcer, Title, Wrapper } from "../components/auth-components";
 
-
-const Wrapper = styled.div`
-    height: 100%;
-    displayL flex;
-    flex-direction: column;
-    align-items: center;
-    width: 420px;
-    padding: 50px 0px;
-`;
-
-const Form = styled.form`
-    margin-top: 50px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%
-`;
-
-const Input =styled.input`
-    padding: 10px 20px;
-    border-radius: 50px;
-    border:vnone;
-    width: 100%;
-    font-size: 16px;
-`;
-
-const Title = styled.h1`
-    font-size: 42px;    
-`;
 
 export default function CreateAccount() {
+    const navigate = useNavigate();
     const [isLoading, setLoading] = useState(false);
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -49,26 +25,39 @@ export default function CreateAccount() {
             setPassword(value)
         }
     }
-    const onSubmit = (e : React.FormEvent<HTMLFormElement> => {
+    const onSubmit = async (e : React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setError("");
+        if (isLoading || name === "" || email === "" || password === "") return;
         try{
-
+            setLoading(true);
+            const credentials = await createUserWithEmailAndPassword(auth, email, password);
+            console.log(credentials.user);
+            await updateProfile(credentials.user, {displayName: name});
+            navigate("/")
         }
         catch(e) {
-
+            if (e instanceof FirebaseError){
+                setError(e.message);
+            }
         }
         finally{
             setLoading(false);
         }
 
-    })
+    };
+
     return <Wrapper>
-        <Title></Title>
+        <Title>계정생성 X</Title>
         <Form onSubmit={onSubmit}>
-            <Input onChange={onChange} name="이름" value={name} placeholder="Name" type="text" required />
-            <Input onChange={onChange} name="이메일" value={email} placeholder="Email" type="email" required />
-            <Input onChange={onChange} name="비밀번호" value={password} placeholder="Password" type="password" required />
-            <Input type="submit" value={isL"제출"} />
+            <Input onChange={onChange} name="name" value={name} placeholder="이름" type="text" required />
+            <Input onChange={onChange} name="email" value={email} placeholder="이메일" type="email" required />
+            <Input onChange={onChange} name="password" value={password} placeholder="비밀번호" type="password" required />
+            <Input type="submit" value={isLoading ? "잠시만 기다려주세요" : "제출"} />
         </Form>
+        {error !== "" ? <Error>{error}</Error> : null}
+        <Swithcer>
+            <Link to="/login">로그인</Link>
+        </Swithcer>
     </Wrapper>
 }
