@@ -1,38 +1,32 @@
 
 import React, { useState } from "react";
 import { auth } from "../firebase";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FirebaseError } from "firebase/app";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { Error, Form, Input, Swithcer, Title, Wrapper } from "../components/auth-components";
-import GithubBotton from "../components/github-btn";
-import GoogleBotton from "../components/google-btn";
+import { sendPasswordResetEmail} from "firebase/auth";
+import { Error, Form, Input, Title, Wrapper } from "../components/auth-components";
 
-
-
-
-export default function LoginAccount() {
+export default function FindPassword() {
     const navigate = useNavigate();
     const [isLoading, setLoading] = useState(false);
     const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const onChange =(e : React.ChangeEvent<HTMLInputElement>) => {
         const {target : {name, value}} = e;
         if (name === "email"){
             setEmail(value)
         }         
-        else if (name === "password"){
-            setPassword(value)
-        }
     }
     const onSubmit = async (e : React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError("");
-        if (isLoading || email === "" || password === "") return;
+        if (isLoading || email === "") return;
         try{
             setLoading(true);
-            await signInWithEmailAndPassword(auth, email, password);
+            await sendPasswordResetEmail(auth, email).then(() =>{
+                console.log("메일이 보내졌습니다.")
+                }
+            )
             navigate("/")
         }
         catch(e) {
@@ -43,24 +37,13 @@ export default function LoginAccount() {
         finally{
             setLoading(false);
         }
-
     };
-
     return <Wrapper>
-        <Title>로그인 X</Title>
+        <Title>비밀번호찾기</Title>
         <Form onSubmit={onSubmit}>
             <Input onChange={onChange} name="email" value={email} placeholder="이메일" type="email" required />
-            <Input onChange={onChange} name="password" value={password} placeholder="비밀번호" type="password" required />
-            <Input type="submit" value={isLoading ? "잠시만 기다려주세요" : "로그인"} />
+            <Input type="submit" value={isLoading ? "잠시만 기다려주세요" : "제출하기"} />
         </Form>
         {error !== "" ? <Error>{error}</Error> : null}
-        <Swithcer>
-            <Link to="/create-account">회원가입</Link>
-        </Swithcer>
-        <Swithcer>
-            <Link to="/forgot-password">비밀번호찾기</Link>
-        </Swithcer>
-        <GithubBotton />
-        <GoogleBotton />
     </Wrapper>
 }

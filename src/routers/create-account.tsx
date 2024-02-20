@@ -1,9 +1,11 @@
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, getAuth,sendEmailVerification,sendPasswordResetEmail, updateProfile } from "firebase/auth";
 import React, { useState } from "react";
 import { auth } from "../firebase";
 import { Link, useNavigate } from "react-router-dom";
 import { FirebaseError } from "firebase/app";
 import { Error, Form, Input, Swithcer, Title, Wrapper } from "../components/auth-components";
+import GithubBotton from "../components/github-btn";
+import GoogleBotton from "../components/google-btn";
 
 
 export default function CreateAccount() {
@@ -33,7 +35,8 @@ export default function CreateAccount() {
             setLoading(true);
             const credentials = await createUserWithEmailAndPassword(auth, email, password);
             console.log(credentials.user);
-            await updateProfile(credentials.user, {displayName: name});
+            await sendEmailVerification(credentials.user);
+            await updateProfile(credentials.user, {displayName: name});           
             navigate("/")
         }
         catch(e) {
@@ -44,7 +47,6 @@ export default function CreateAccount() {
         finally{
             setLoading(false);
         }
-
     };
 
     return <Wrapper>
@@ -59,5 +61,7 @@ export default function CreateAccount() {
         <Swithcer>
             <Link to="/login">로그인</Link>
         </Swithcer>
+        <GithubBotton />
+        <GoogleBotton />
     </Wrapper>
 }

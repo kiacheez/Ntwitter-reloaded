@@ -1,5 +1,20 @@
 import styled from "styled-components";
 
+export const Button = styled.span`
+    background-color: gray;
+    margin-top: 20px;
+    font-weight: 700;
+    width: 100%
+    padding: 10px 20px;
+    border-radius: 50px;
+    height: 40px;
+    border: 0;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+`;
 
 export const Wrapper = styled.div`
     height: 100%;
@@ -51,3 +66,4 @@ export const Swithcer = styled.span`
         color: #6bb3ff
     }
 `;
+
