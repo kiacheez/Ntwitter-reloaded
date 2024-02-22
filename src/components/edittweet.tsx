@@ -1,8 +1,9 @@
-import { addDoc, collection, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { ChangeEvent, useState } from "react";
 import styled from "styled-components"
 import { auth, db, storage } from "../firebase";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { ITweet } from "./timeline";
 
 const Form = styled.form`
     display: flex;
@@ -57,22 +58,22 @@ const SubmitBtn = styled.input`
     }
 `;
 
-export default function PostTweet() {
+export default function EditTweet({ photo, tweet, id } : ITweet) {
     const [isLoading, setLoading] = useState(false);
-    const [tweet, setTweet] = useState("");
-    const [file, setFile] = useState<File | null>();
+    const [editTweet, setEditTweet] = useState("");
+    const [editFile, setEditFile] = useState<File | null>();
     const onChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-        setTweet(e.target.value)
+        setEditTweet(e.target.value)
     }
     const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { files } = e.target;
         const filesizeKB = 1024 * 1024
-        const MaxMB = filesizeKB/filesizeKB
+        const MaxMB = filesizeKB / filesizeKB
 
-        if (files && files.length === 1 && files[0].size < filesizeKB ) {
-            setFile(files[0]);
-        } 
-        if ( files && files[0].size > filesizeKB) {
+        if (files && files.length === 1 && files[0].size < filesizeKB) {
+            setEditFile(files[0]);
+        }
+        if (files && files[0].size > filesizeKB) {
             alert(`최대 ${MaxMB}MB까지 업로드할 수 있습니다.`);
         }
 
@@ -80,25 +81,22 @@ export default function PostTweet() {
     const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const user = auth.currentUser
-        if (!user || isLoading || tweet === "") return;
+        if (!user || isLoading || editTweet === "") return;
         try {
             setLoading(true);
-            const doc = await addDoc(collection(db, "tweets"), {
-                tweet,
-                createdAt: Date.now(),
-                username: user.displayName || "Anonymous",
-                userId: user.uid
-            });
-            if (file) {
+            //doc(firestore: Firestore, path: string, ...pathSegments: string[],
+            const editdoc = doc(db, "tweets", id);
+            await updateDoc(editdoc, { tweet: editTweet, })
+            if (editFile) {
                 const locationRef = ref(storage, `tweets/${user.uid}_${user.displayName}/${user.uid}`);
-                const result = await uploadBytes(locationRef, file);
+                const result = await uploadBytes(locationRef, editFile);
                 const url = await getDownloadURL(result.ref);
-                await updateDoc(doc, {
+                await updateDoc(editdoc, {
                     photo: url
                 })
             };
-            setTweet("");
-            setFile(null);
+            setEditTweet("");
+            setEditFile(null);
         } catch (error) {
             console.log(e);
         } finally {
@@ -108,7 +106,7 @@ export default function PostTweet() {
     }
     return <Form onSubmit={onSubmit}>
         <TextArea required rows={5} maxLength={1000} onChange={onChange} value={tweet} placeholder="입력하세요" />
-        <AttachFileButton htmlFor="file">{file ? "사진이 첨부되었습니다." : "사진첨부"}</AttachFileButton>
+        <AttachFileButton htmlFor="file">{editFile ? "사진이 첨부되었습니다." : "사진첨부"}</AttachFileButton>
         <AttachFileInput onChange={onFileChange} type="file" id="file" accept="image/*" />
         <SubmitBtn type="submit" value={isLoading ? "등록중입니다." : "트윗"} />
     </Form>
