@@ -3,9 +3,9 @@ import styled from "styled-components";
 import { auth } from "../firebase";
 
 const Wrapper = styled.div`
-    display:gird;
-    gap: 20px;
-    gird-template-columns: 1fr 4fr
+    display:grid;
+    gap: 30px;
+    grid-template-columns: 1fr 4fr;
     padding: 50px 0px;
     width: 100%;
     height: 100%;

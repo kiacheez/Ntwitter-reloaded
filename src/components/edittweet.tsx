@@ -2,8 +2,8 @@ import { doc, updateDoc } from "firebase/firestore";
 import { ChangeEvent, useState } from "react";
 import styled from "styled-components"
 import { auth, db, storage } from "../firebase";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { ITweet } from "./timeline";
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
+
 
 const Form = styled.form`
     display: flex;
@@ -58,14 +58,21 @@ const SubmitBtn = styled.input`
     }
 `;
 
-export default function EditTweet({ photo, tweet, id } : ITweet) {
+export interface ETweet {
+    id: string;
+    photo?: string;
+    tweet: string;
+    setIsEditing:(open: boolean) => void;
+}
+
+export default function EditTweet({ photo, tweet, id, setIsEditing } : ETweet) {
     const [isLoading, setLoading] = useState(false);
-    const [editTweet, setEditTweet] = useState("");
+    const [editTweet, setEditTweet] = useState(tweet);
     const [editFile, setEditFile] = useState<File | null>();
     const onChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
         setEditTweet(e.target.value)
     }
-    const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const onFileEditChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { files } = e.target;
         const filesizeKB = 1024 * 1024
         const MaxMB = filesizeKB / filesizeKB
@@ -86,8 +93,12 @@ export default function EditTweet({ photo, tweet, id } : ITweet) {
             setLoading(true);
             //doc(firestore: Firestore, path: string, ...pathSegments: string[],
             const editdoc = doc(db, "tweets", id);
-            await updateDoc(editdoc, { tweet: editTweet, })
+            await updateDoc(editdoc, { tweet: editTweet, updateAt: Date.now()})
             if (editFile) {
+                if (photo) {
+                    const originRef = ref(storage,`tweets/${user.uid}_${user.displayName}/${user.uid}`);
+                    await deleteObject(originRef)
+                }
                 const locationRef = ref(storage, `tweets/${user.uid}_${user.displayName}/${user.uid}`);
                 const result = await uploadBytes(locationRef, editFile);
                 const url = await getDownloadURL(result.ref);
@@ -97,6 +108,7 @@ export default function EditTweet({ photo, tweet, id } : ITweet) {
             };
             setEditTweet("");
             setEditFile(null);
+            setIsEditing(false);
         } catch (error) {
             console.log(e);
         } finally {
@@ -105,9 +117,9 @@ export default function EditTweet({ photo, tweet, id } : ITweet) {
 
     }
     return <Form onSubmit={onSubmit}>
-        <TextArea required rows={5} maxLength={1000} onChange={onChange} value={tweet} placeholder="입력하세요" />
-        <AttachFileButton htmlFor="file">{editFile ? "사진이 첨부되었습니다." : "사진첨부"}</AttachFileButton>
-        <AttachFileInput onChange={onFileChange} type="file" id="file" accept="image/*" />
-        <SubmitBtn type="submit" value={isLoading ? "등록중입니다." : "트윗"} />
+        <TextArea required rows={5} maxLength={1000} onChange={onChange} value={editTweet} placeholder="입력하세요" />
+        <AttachFileButton htmlFor="editFile${id}">{editFile ? "사진이 첨부되었습니다." : "사진첨부"}</AttachFileButton>
+        <AttachFileInput onChange={onFileEditChange} type="file" id="editFile${id}" accept="image/*" />
+        <SubmitBtn type="submit" value={isLoading ? "등록변경중입니다." : "트윗"} />
     </Form>
 }

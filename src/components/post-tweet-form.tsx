@@ -37,7 +37,7 @@ const AttachFileButton = styled.label`
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-`;
+`
 
 const AttachFileInput = styled.input`
     display: none;
